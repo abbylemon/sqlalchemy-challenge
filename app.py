@@ -42,7 +42,7 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
+        f"/api/v1.0/start_date<br/>"
         f"/api/v1.0/<start>/<end><br/>"
     )
 
@@ -58,7 +58,7 @@ def precipitation():
     twelveMonthsAgo = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
     lastyearofdata = session.query(Measurement.date, Measurement.prcp).\
-    filter(Measurement.date > twelveMonthsAgo).\
+    filter(Measurement.date >= twelveMonthsAgo).\
     order_by(Measurement.date.desc()).all()
     
     session.close()
@@ -90,29 +90,65 @@ def stations():
         all_stations.append(station)
         
     return jsonify(all_stations)
-    
-    
+     
 @app.route("/api/v1.0/tobs")
 def temperature():
     # Create session from Python to the DB
     session = Session(engine)
     
     # Query
-    temps = session.query(Measurement.station, func.count(Measurement.tobs)).\
-    group_by(Measurement.station).\
-    order_by(func.count(Measurement.tobs).desc()).all()
+    lastestmeasurement = session.query(Measurement.date).\
+    order_by(Measurement.date.desc()).first()
+    
+    twelveMonthsAgo = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    
+    temps = session.query(Measurement.date, Measurement.tobs).\
+        filter(Measurement.date >= twelveMonthsAgo).all()
+    #QUESTION!!!!!!
+    #Do they want this filtered by the station with the most observations?????
     
     session.close()
     
     # Create a list of dictionaries from the query data
     all_temps = []
-    for station, tobs in temps:
+    for date, tobs in temps:
         temp_dict = {}
-        temp_dict['station'] = station
+        temp_dict['date'] = date
         temp_dict['tobs'] = tobs
         all_temps.append(temp_dict)
         
     return jsonify(all_temps)
+
+@app.route("/api/v1.0/start_date")
+def tempStats():
+    # Create a session from Python to the DB
+    session = Session(engine)
+    
+    # Query
+    start_date = '2012-02-28'
+    
+    sel = [
+        func.min(Measurement.tobs),
+        func.avg(Measurement.tobs),
+        func.max(Measurement.tobs)
+    ]
+    
+    temp_start = session.query(*sel).\
+        filter(Measurement.date >= start_date).\
+        group_by(Measurement.date).all()
+    
+    session.close()
+    
+    all_temp_start = []
+    for Tmin, Tavg, Tmax in temp_start:
+        temp_start_dict = {}
+        temp_start_dict['TMIN'] = Tmin
+        temp_start_dict['TAVG'] = Tavg
+        temp_start_dict['TMAX'] = Tmax
+        all_temp_start.append(temp_start_dict)
+        
+    return jsonify(all_temp_start)
+
     
 if __name__ == '__main__':
     app.run(debug=True)
