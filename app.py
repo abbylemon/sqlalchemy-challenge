@@ -72,7 +72,47 @@ def precipitation():
         all_precipitation.append(precipitation_dict)
         
     return jsonify(all_precipitation)
+  
+@app.route("/api/v1.0/stations")
+def stations():
+    # Create session from Python to the DB
+    session = Session(engine)
     
+    # Query
+    stations = session.query(Measurement.station).\
+    group_by(Measurement.station).all()
+    
+    session.close()
+    
+    # Create a list of the query data
+    all_stations = []
+    for station in stations:
+        all_stations.append(station)
+        
+    return jsonify(all_stations)
+    
+    
+@app.route("/api/v1.0/tobs")
+def temperature():
+    # Create session from Python to the DB
+    session = Session(engine)
+    
+    # Query
+    temps = session.query(Measurement.station, func.count(Measurement.tobs)).\
+    group_by(Measurement.station).\
+    order_by(func.count(Measurement.tobs).desc()).all()
+    
+    session.close()
+    
+    # Create a list of dictionaries from the query data
+    all_temps = []
+    for station, tobs in temps:
+        temp_dict = {}
+        temp_dict['station'] = station
+        temp_dict['tobs'] = tobs
+        all_temps.append(temp_dict)
+        
+    return jsonify(all_temps)
     
 if __name__ == '__main__':
     app.run(debug=True)
