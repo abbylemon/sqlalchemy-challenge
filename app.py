@@ -42,7 +42,7 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start_date<br/>"
+        f"/api/v1.0/start   Where start is a date with format %Y-%m-%d<br/>"
         f"/api/v1.0/<start>/<end><br/>"
     )
 
@@ -119,13 +119,16 @@ def temperature():
         
     return jsonify(all_temps)
 
-@app.route("/api/v1.0/start_date")
-def tempStats():
+@app.route("/api/v1.0/start_date/<start>")
+def tempStats(start):
+    # Fetch start date and create a veriable for the query
+    start_date = start
+    
     # Create a session from Python to the DB
     session = Session(engine)
     
     # Query
-    start_date = '2012-02-28'
+#     start_date = '2012-02-28'
     
     sel = [
         func.min(Measurement.tobs),
