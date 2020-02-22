@@ -42,8 +42,8 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start   Where start is a date with format %Y-%m-%d<br/>"
-        f"/api/v1.0/<start>/<end><br/>"
+        f"/api/v1.0/2012-02-28<br/>"
+        f"/api/v1.0/2012-02-28/2012-03-05<br/>"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -119,16 +119,18 @@ def temperature():
         
     return jsonify(all_temps)
 
-@app.route("/api/v1.0/start_date/<start>")
-def tempStats(start):
+@app.route("/api/v1.0/2012-02-28")
+def tempStart():
     # Fetch start date and create a veriable for the query
-    start_date = start
+#     start_date = start
+################### QUESTION ###################
+# How do I make this dynamic for any date?
     
     # Create a session from Python to the DB
     session = Session(engine)
     
     # Query
-#     start_date = '2012-02-28'
+    start_date = '2012-02-28'
     
     sel = [
         func.min(Measurement.tobs),
@@ -151,6 +153,43 @@ def tempStats(start):
         all_temp_start.append(temp_start_dict)
         
     return jsonify(all_temp_start)
+
+@app.route("/api/v1.0/2012-02-28/2012-03-05")
+def tempStartEnd():
+    # Fetch start date and create a veriable for the query
+#     start_date = start
+################### QUESTION ###################
+# How do I make this dynamic for any date?
+    
+    # Create a session from Python to the DB
+    session = Session(engine)
+    
+    # Query
+    start_date = '2012-02-28'
+    end_date = '2012-03-05'
+    
+    sel = [
+        func.min(Measurement.tobs),
+        func.avg(Measurement.tobs),
+        func.max(Measurement.tobs)
+    ]
+    
+    temp_start_end = session.query(*sel).\
+        filter(Measurement.date >= start_date).\
+        filter(Measurement.date <= end_date).\
+        group_by(Measurement.date).all()
+    
+    session.close()
+    
+    all_temp_start_end = []
+    for Tmin, Tavg, Tmax in temp_start_end:
+        temp_start_end_dict = {}
+        temp_start_end_dict['TMIN'] = Tmin
+        temp_start_end_dict['TAVG'] = Tavg
+        temp_start_end_dict['TMAX'] = Tmax
+        all_temp_start_end.append(temp_start_end_dict)
+        
+    return jsonify(all_temp_start_end) 
 
     
 if __name__ == '__main__':
