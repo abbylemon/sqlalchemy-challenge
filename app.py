@@ -37,13 +37,16 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return(
-        f"Welcome to my home page!<br/>"
+        f"Welcome to my home page!<br/><br/>"
+        
         f"For more content go to:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/2012-02-28<br/>"
-        f"/api/v1.0/2012-02-28/2012-03-05<br/>"
+        f"/api/v1.0/&lt;start&gt;<br/>"
+        f"/api/v1.0/&lt;start&gt/&lt;end&gt<br/><br/>"
+        
+        f"In stead of &lt;start&gt; and &lt;end&gt; input dates with format yyyy-mm-dd."
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -104,8 +107,6 @@ def temperature():
     
     temps = session.query(Measurement.date, Measurement.tobs).\
         filter(Measurement.date >= twelveMonthsAgo).all()
-    #QUESTION!!!!!!
-    #Do they want this filtered by the station with the most observations?????
     
     session.close()
     
@@ -119,18 +120,14 @@ def temperature():
         
     return jsonify(all_temps)
 
-@app.route("/api/v1.0/2012-02-28")
-def tempStart():
-    # Fetch start date and create a veriable for the query
-#     start_date = start
-################### QUESTION ###################
-# How do I make this dynamic for any date?
+@app.route("/api/v1.0/<start>")
+def tempStart(start):
     
     # Create a session from Python to the DB
     session = Session(engine)
     
     # Query
-    start_date = '2012-02-28'
+    start_date = start
     
     sel = [
         func.min(Measurement.tobs),
@@ -154,19 +151,15 @@ def tempStart():
         
     return jsonify(all_temp_start)
 
-@app.route("/api/v1.0/2012-02-28/2012-03-05")
-def tempStartEnd():
-    # Fetch start date and create a veriable for the query
-#     start_date = start
-################### QUESTION ###################
-# How do I make this dynamic for any date?
+@app.route("/api/v1.0/<start>/<end>")
+def tempStartEnd(start, end):
     
     # Create a session from Python to the DB
     session = Session(engine)
     
     # Query
-    start_date = '2012-02-28'
-    end_date = '2012-03-05'
+    start_date = start
+    end_date = end
     
     sel = [
         func.min(Measurement.tobs),
